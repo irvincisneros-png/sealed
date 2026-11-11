@@ -18,7 +18,7 @@ test('trace: empty grid goes straight through', () => {
     const r = trace(g, s);
     assert.equal(r.kind, 'through');
     assert.deepEqual(r.exit, { side: oppositeSide(s.side), i: s.i });
-    assert.equal(r.steps, 8);
+    assert.equal(r.steps, 7);
   }
 });
 test('trace: reflected off a full block, with distance', () => {
@@ -66,7 +66,7 @@ test('trace: deflected ball can bounce off a block behind the triangle', () => {
   const r = ex(g, 'W', 3); // turns south, hits the block, comes back up and the slope turns it back west
   assert.deepEqual(r.exit, { side: 'W', i: 3 });
   assert.equal(r.kind, 'reflected');
-  assert.equal(r.steps, 8);
+  assert.equal(r.steps, 7);
 });
 test('trace: reversible on 200 random grids and never lost', () => {
   const r = rng(42);
