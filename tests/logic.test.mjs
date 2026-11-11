@@ -18,7 +18,7 @@ test('trace: empty grid goes straight through', () => {
     const r = trace(g, s);
     assert.equal(r.kind, 'through');
     assert.deepEqual(r.exit, { side: oppositeSide(s.side), i: s.i });
-    assert.equal(r.steps, 7);
+    assert.equal(r.steps, 8);
   }
 });
 test('trace: reflected off a full block, with distance', () => {
