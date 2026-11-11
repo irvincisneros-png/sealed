@@ -1,0 +1,12 @@
+{
+  "name": "sealed",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SEALED: crack the vault without opening it. A Year 8 Science (NSW 8.2.2, 8.2.3) game about scientific models.",
+  "scripts": {
+    "serve": "python3 devserver.py 8490",
+    "test": "node --test tests/*.test.mjs",
+    "playtest": "node tests/playtest/flow.mjs"
+  }
+}
