@@ -3,7 +3,7 @@ import { rankFor } from '../logic/score.js';
 import { CARDS, cardsForCase } from '../data/cards.js';
 
 const KEY = 'sealed.v1';
-const blank = () => ({ stars: {}, best: {}, cards: [], mm: { best: 0, bestStreak: 0 }, daily: {}, settings: { quality: 'med', muted: false }, seenHow: false });
+const blank = () => ({ stars: {}, best: {}, cards: [], mm: { best: 0, bestStreak: 0 }, daily: {}, settings: { quality: 'med', muted: false }, seenHow: false, seenCoach: false });
 let data = blank();
 let memoryOnly = false;
 
@@ -30,6 +30,7 @@ export function sanitise(parsed) {
   d.settings = { quality: ['low', 'med', 'high'].includes(s.quality) ? s.quality : d.settings.quality, muted: typeof s.muted === 'boolean' ? s.muted : d.settings.muted };
   d.mm = { best: isNum(m.best) ? m.best : 0, bestStreak: isNum(m.bestStreak) ? m.bestStreak : 0 };
   d.seenHow = p.seenHow === true;
+  d.seenCoach = p.seenCoach === true;
   return d;
 }
 export function load() {
@@ -72,3 +73,4 @@ export function recordMatch(score, streak) {
 export function unlockCard(id) { if (!hasCard(id)) { data.cards.push(id); persist(); return true; } return false; }
 export function setSetting(k, v) { data.settings[k] = v; persist(); }
 export function markSeenHow() { data.seenHow = true; persist(); }
+export function markSeenCoach() { data.seenCoach = true; persist(); }
