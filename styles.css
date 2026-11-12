@@ -54,9 +54,68 @@ h2 { margin: 0 0 6px; font-weight: 800; letter-spacing: .06em; text-transform: u
 .mc b { color: var(--text); } .mc em { color: var(--amber); font-style: normal; font-weight: 800; font-size: .75rem; text-transform: uppercase; }
 .tabs { display: none; }
 @media (max-width: 760px) {
+  .pl.build { height: 54vh; } .pl.build .tools:first-of-type { grid-template-columns: repeat(3, 1fr); }
   .pl, .pr { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 46vh; max-height: none; border-radius: 14px 14px 0 0; }
   .panel { display: none; } .panel.active { display: flex; }
   .tabs { display: flex; position: absolute; left: 0; right: 0; bottom: calc(46vh); gap: 4px; padding: 0 8px; }
-  .tabs .btn { flex: 1; min-height: 40px; border-radius: 10px 10px 0 0; background: #151a21; }
+  .tabs .btn { flex: 1; min-height: 44px; border-radius: 10px 10px 0 0; background: #151a21; }
   .hint { bottom: calc(46vh + 44px); font-size: .75rem; }
 }
+
+/* ---- mute, menu extras */
+#mute { position: fixed; top: 4px; right: 6px; z-index: 30; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 99px; display: grid; place-items: center; background: #10151bdd; }
+.topbar { padding-right: 58px; }
+.screen { padding-top: 56px; }
+.menu .btn small { display: block; font-weight: 400; font-size: .75rem; color: var(--dim); }
+.btn[aria-disabled="true"] { opacity: .6; cursor: not-allowed; border-style: dashed; }
+.btn:focus-visible, .door:focus-visible, summary:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.dim { color: var(--dim); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.problems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--bad); }
+.link { width: 100%; min-height: 44px; background: #10151b; color: var(--text); border: 1px solid var(--cyan); border-radius: 8px; padding: 0 8px; font: inherit; font-size: .75rem; }
+
+/* ---- results dock: right side on desktop, bottom sheet on a phone */
+.dock { position: absolute; top: 60px; right: 10px; bottom: 12px; width: 350px; max-width: calc(100% - 20px); overflow: auto; background: #151a21f2; border: 1px solid var(--amber); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; align-content: start; }
+.dock .dhead { display: flex; align-items: baseline; gap: 12px; }
+.dock .big { font-size: 2.2rem; line-height: 1; }
+.dock .dline { font-size: .9rem; }
+.dock .refl { margin: 0; font-size: .85rem; }
+.dock .legend { font-size: .82rem; color: var(--dim); }
+.dock .legend summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.dock .legend ul { margin: 0 0 6px; padding-left: 18px; }
+.dock .row .btn { flex: 1 1 auto; }
+@media (max-width: 760px) {
+  .dock { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-width: none; max-height: 44vh; border-radius: 14px 14px 0 0; padding: 10px 12px; gap: 6px; }
+  .dock .big { font-size: 1.7rem; }
+  .dock .dline, .dock .refl { font-size: .8rem; }
+  .dock .row { flex-wrap: nowrap; }
+  .dock .row .btn { flex: 1 1 0; padding: 0 6px; font-size: .82rem; }
+  .dock .legend summary { min-height: 44px; }
+}
+
+/* ---- Model Match */
+.mm { justify-content: flex-start; padding-top: 60px; }
+.mmcard { text-align: center; align-items: stretch; }
+.mmcard .stem { font-size: 1.25rem; font-weight: 800; margin: 0; min-height: 3.2em; display: flex; align-items: center; justify-content: center; }
+.mmtop { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; width: min(520px, 100%); font-size: .9rem; color: var(--dim); }
+.mmtop b { color: var(--text); }
+.barwrap { width: min(520px, 100%); height: 8px; background: #10151b; border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+#bar { height: 100%; background: var(--amber); }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt { min-height: 56px; padding: 6px 8px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; line-height: 1.15; }
+.opt .num { color: var(--amber); font-weight: 800; }
+.opt .mark { font-size: .75rem; font-weight: 800; flex-basis: 100%; }
+.opt:disabled { opacity: 1; }
+.opt.right { border: 2px solid var(--ok); background: #123320; }
+.opt.wrong { border: 2px dashed var(--bad); background: #331512; }
+.fb { min-height: 3.2em; font-size: .95rem; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+@media (max-width: 420px) { .opts { grid-template-columns: 1fr; } .mmcard .stem { font-size: 1.1rem; } }
+
+/* ---- tutorial */
+#coach { position: fixed; z-index: 25; top: 56px; left: 50%; transform: translateX(-50%); width: min(460px, calc(100% - 16px)); display: flex; align-items: center; gap: 10px; background: #10151bf5; border: 2px solid var(--cyan); border-radius: 14px; padding: 8px 10px; font-size: .92rem; }
+#coach .cstep { color: var(--cyan); font-weight: 800; white-space: nowrap; }
+#coach .ctext { flex: 1; }
+#coach .btn { padding: 0 12px; min-width: 56px; }
+.coach-target { outline: 3px solid var(--cyan); outline-offset: 3px; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { outline-offset: 6px; } }
+@media (prefers-reduced-motion: reduce) { .coach-target { animation: none; } * { scroll-behavior: auto !important; } }
