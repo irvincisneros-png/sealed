@@ -1,17 +1,42 @@
 // localStorage persistence. Everything is wrapped in try/catch: the game works without it.
 import { rankFor } from '../logic/score.js';
-import { cardsForCase } from '../data/cards.js';
+import { CARDS, cardsForCase } from '../data/cards.js';
 
 const KEY = 'sealed.v1';
 const blank = () => ({ stars: {}, best: {}, cards: [], mm: { best: 0, bestStreak: 0 }, daily: {}, settings: { quality: 'med', muted: false }, seenHow: false });
 let data = blank();
 let memoryOnly = false;
 
+const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+const isNum = v => typeof v === 'number' && Number.isFinite(v);
+const numMap = v => { const o = {}; if (isObj(v)) for (const [k, x] of Object.entries(v)) if (k !== '__proto__' && isNum(x)) o[k] = x; return o; };
+const DAILY_KEYS = ['match', 'stars', 'left', 'score'];
+const dailyMap = v => {
+  const o = {};
+  if (isObj(v)) for (const [k, x] of Object.entries(v)) if (k !== '__proto__' && isObj(x) && DAILY_KEYS.every(f => isNum(x[f]))) o[k] = Object.fromEntries(DAILY_KEYS.map(f => [f, x[f]]));
+  return o;
+};
+// Pure: turn whatever was parsed from storage into a valid save, falling back to defaults per field.
+export function sanitise(parsed) {
+  const d = blank(), p = isObj(parsed) ? parsed : {};
+  const known = new Set(CARDS.map(c => c.id));
+  d.stars = numMap(p.stars);
+  d.best = numMap(p.best);
+  d.daily = dailyMap(p.daily);
+  d.cards = Array.isArray(p.cards) ? [...new Set(p.cards.filter(c => typeof c === 'string' && known.has(c)))] : [];
+  // cards that were renamed or replaced: re-grant the current cards for any case already cleared
+  for (const id of Object.keys(d.stars)) if (d.stars[id] >= 1) for (const c of cardsForCase(Number(id))) if (!d.cards.includes(c.id)) d.cards.push(c.id);
+  const s = isObj(p.settings) ? p.settings : {}, m = isObj(p.mm) ? p.mm : {};
+  d.settings = { quality: ['low', 'med', 'high'].includes(s.quality) ? s.quality : d.settings.quality, muted: typeof s.muted === 'boolean' ? s.muted : d.settings.muted };
+  d.mm = { best: isNum(m.best) ? m.best : 0, bestStreak: isNum(m.bestStreak) ? m.bestStreak : 0 };
+  d.seenHow = p.seenHow === true;
+  return d;
+}
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { const p = JSON.parse(raw); data = { ...blank(), ...p, settings: { ...blank().settings, ...(p.settings || {}) }, mm: { ...blank().mm, ...(p.mm || {}) } }; }
-  } catch { memoryOnly = true; }
+    if (raw) data = sanitise(JSON.parse(raw));
+  } catch { memoryOnly = true; data = blank(); }
   return data;
 }
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { memoryOnly = true; } }

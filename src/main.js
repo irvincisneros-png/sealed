@@ -16,9 +16,11 @@ save.load();
 const $app = document.getElementById('app');
 const stage = new Stage(document.getElementById('stage'), save.get().settings.quality);
 const fx = new ProbeFx(stage), bp = new Blueprint(stage);
-let session = null, tool = 'bounce', modelMode = false, paintTool = 'block', hud = null, revealObj = null;
+let session = null, tool = 'bounce', modelMode = false, paintTool = 'block', hud = null, revealObj = null, revealSafe = { l: 0, r: 0, t: 0, b: 0 };
 const state = { screen: 'title', get session() { return session; } };
-window.__sealed = { state, logic: { ...logic, CASES }, stage };
+// Public case list for debugging: no maps or grids, so the hidden object cannot be read before the reveal.
+const PUBLIC_CASES = CASES.map(({ id, name, blurb, n, budget, probes }) => ({ id, name, blurb, n, budget, probes }));
+window.__sealed = { state, logic: { ...logic, CASES: PUBLIC_CASES }, stage };
 stage.setN(8); fx.attach(stage.vault); bp.attach(stage.vault); bp.hide(); stage.setMode('idle'); stage.start();
 
 const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; };
@@ -64,11 +66,11 @@ function cardsScreen() {
 
 // ---------- case screen
 function startCase(c) {
-  session = caseSession(c); resetStage(c.n);
+  session = caseSession(c); resetStage(c.n); armed = null; state.hov = null; revealSafe = { l: 0, r: 0, t: 0, b: 0 };
   modelMode = false; tool = 'bounce'; bp.show(); bp.setModel(session.model); bp.setModeVisual(false); stage.setMode('play');
   session.on('probe', obs => { fx.play(obs).then(() => { drawLog(); }); updateHud(); });
-  session.on('model', () => { bp.setModel(session.model); updateHud(); });
-  session.on('newdata', obs => { newDataModal(obs); });
+  session.on('model', () => { bp.setModel(session.model); updateHud(); drawLog(); });
+  session.on('newdata', (obs, bad) => { newDataModal(obs, bad); });
   session.on('reveal', r => doReveal(r));
   buildHud();
 }
@@ -87,7 +89,7 @@ const narrow = () => innerWidth <= 760;
 function layout() {
   if (narrow()) stage.setSafeArea({ l: 0, r: 0, t: 52, b: innerHeight * 0.46 + 40 }); else stage.setSafeArea({ l: 262, r: 302, t: 56, b: 60 });
 }
-addEventListener('resize', () => { if (state.screen === 'case') { layout(); const a = hud.querySelector('.panel.active'); if (!narrow()) hud.querySelectorAll('.panel').forEach(p => p.classList.add('active')); else if (!a) hud.querySelector('#p-tools').classList.add('active'); } });
+addEventListener('resize', () => { if (state.screen === 'case' && !hud) stage.setSafeArea(revealSafe); else if (state.screen === 'case') { layout(); const a = hud.querySelector('.panel.active'); if (!narrow()) hud.querySelectorAll('.panel').forEach(p => p.classList.add('active')); else if (!a) hud.querySelector('#p-tools').classList.add('active'); } });
 const TOOLS = { bounce: ['Bounce ball', 10], xray: ['X-ray', 25], scale: ['Scale', 15], thermal: ['Thermal', 60] };
 function updateHud() {
   const c = session; if (!hud) return;
@@ -112,7 +114,7 @@ function updateHud() {
   hud.querySelector('#hint').textContent = modelMode ? 'Click or drag on the lid to paint your model.' : tool === 'xray' ? 'Click a brass port: the X-ray measures that whole row or column.' : tool === 'bounce' ? 'Click a brass port to roll a ball in.' : 'Pick a tool, or switch to Model mode.';
   if (c.phase === 'final') hud.querySelector('#hint').textContent = 'Revise your model, then press Final submit.';
 }
-function modeVisual() { bp.setModeVisual(modelMode); fx.setDimmed(modelMode); stage.setMode(modelMode ? 'blueprint' : 'play'); }
+function modeVisual() { disarm(); bp.setModeVisual(modelMode); fx.setDimmed(modelMode); stage.setMode(modelMode ? 'blueprint' : 'play'); }
 function toggleModel() { modelMode = !modelMode; modeVisual(); updateHud(); }
 function fireGlobal(type) { const r = session.fire({ type }); if (!r.ok) toast(r.reason); }
 function drawLog() {
@@ -130,18 +132,21 @@ function drawLog() {
   }
   if (!ul.children.length) ul.appendChild(el('<li style="cursor:default">Nothing yet. Fire a probe.</li>'));
 }
-function newDataModal(obs) {
-  const m = el(`<div class="modal"><div class="card"><h2>New data arrives</h2><p>A second team ran 3 more probes. Their results don't fit your model.</p><ul class="log">${obs.map(o => `<li style="--c:#56B4E9"><span>#${o.id} ${describeObservation(o)}</span></li>`).join('')}</ul><button class="btn primary" id="ok">Revise my model</button></div></div>`);
+function newDataModal(obs, bad = []) {
+  const li = (o, c) => `<li style="--c:${c}"><span>#${o.id} ${describeObservation(o)}</span></li>`;
+  const own = bad.length ? `<p>Your own data already disagrees with your model. These observations do not fit it:</p><ul class="log">${bad.map(o => li(o, o.colour || '#E69F00')).join('')}</ul>` : '';
+  const team = obs.length ? `<p>A second team ran ${obs.length} more probe${obs.length === 1 ? '' : 's'}. Their results don't fit your model.</p><ul class="log">${obs.map(o => li(o, '#56B4E9')).join('')}</ul>` : '';
+  const m = el(`<div class="modal"><div class="card"><h2>${obs.length ? 'New data arrives' : 'Your model has a problem'}</h2>${obs.length ? team + own : own + '<p>Scientists change the model, not the data. Revise your model, then submit again.</p>'}<button class="btn primary" id="ok">Revise my model</button></div></div>`);
   $app.appendChild(m);
   m.querySelector('#ok').onclick = () => { m.remove(); session.acknowledgeNewData(); for (const o of obs) { o.shown = true; fx.play(o, { instant: true }); } drawLog(); updateHud(); };
 }
 function doReveal(r) {
-  hud?.remove(); hud = null; stage.setSafeArea({ l: 0, r: 0, t: 0, b: 160 }); bp.hide();
+  hud?.remove(); hud = null; revealSafe = { l: 0, r: 0, t: 0, b: 160 }; stage.setSafeArea(revealSafe); bp.hide();
   const rec = session.caseId ? save.recordCase(session.caseId, r) : { newCards: [] };
   revealObj = playReveal(stage, stage.vault, session.truth, session.model, () => resultsCard(r, rec));
 }
 function resultsCard(r, rec) {
-  stage.setSafeArea({ l: 0, r: 0, t: 0, b: 0 });
+  revealSafe = { l: 0, r: 0, t: 0, b: 0 }; stage.setSafeArea(revealSafe);
   const m = el(`<div class="modal" style="align-items:flex-end;background:none"><div class="card"><h2>Results</h2><div class="big"><span id="pct">0</span>% <span class="stars">${stars(r.stars)}</span></div>
   <div>Data fit: ${r.fitOk} of ${r.fitTotal} observations explained</div><div>Budget left: $${r.budgetLeft} · Score: <b>${r.score}</b> · Rank: ${save.rank()}</div>
   ${r.survived ? '<div class="good">Your model survived every test.</div>' : r.revised && r.draftMatch != null ? `<div>First draft ${Math.round(r.draftMatch)}% to final ${Math.round(r.match)}%</div>` : ''}
@@ -161,26 +166,60 @@ function cardUnlock(ids) {
 
 // ---------- input
 const canvas = document.getElementById('stage');
-let painting = false;
+let painting = false, paintPointer = null;
 function cellAt(e) { const p = stage.lidPoint(e, LID_TOP); if (!p) return null; const c = worldToCell(session.n, p); return c.x >= 0 && c.y >= 0 && c.x < session.n && c.y < session.n ? c : null; }
 function portSpec(slot) { return tool === 'xray' ? { type: 'xray', axis: slot.side === 'W' || slot.side === 'E' ? 'row' : 'col', i: slot.i } : { type: 'bounce', slot }; }
-canvas.addEventListener('pointerdown', e => {
-  if (state.screen !== 'case' || !session) return;
-  if (modelMode) { const c = cellAt(e); if (c) { painting = true; canvas.setPointerCapture(e.pointerId); session.beginStroke(); session.paint(c.x, c.y, paintTool); } return; }
-  const hit = stage.pick(e, stage.vault.hits)[0];
-  if (hit && (tool === 'bounce' || tool === 'xray')) { const r = session.fire(portSpec(hit.object.userData.slot)); if (!r.ok) toast(r.reason); }
-});
-canvas.addEventListener('pointermove', e => {
-  if (state.screen !== 'case' || !session) return;
-  if (modelMode) { const c = cellAt(e); bp.setGhost(c); if (painting && c) session.paint(c.x, c.y, paintTool); return; }
-  const hit = (tool === 'bounce' || tool === 'xray') ? stage.pick(e, stage.vault.hits)[0] : null;
-  const slot = hit?.object.userData.slot;
-  if (state.hov && (!slot || state.hov !== slot)) stage.vault.setPortHover(state.hov, false);
+// Ports are small on a phone, so pick the nearest one to the pointer in screen space instead of ray-testing a tiny hitbox.
+const PICK_RADIUS = 28, _v = new THREE.Vector3();
+function pickPort(e) {
+  const r = canvas.getBoundingClientRect(); let best = null, bd = PICK_RADIUS;
+  for (const p of stage.vault.ports.values()) {
+    p.hit.getWorldPosition(_v); _v.project(stage.camera);
+    if (_v.z > 1) continue;
+    const d = Math.hypot((_v.x * 0.5 + 0.5) * r.width + r.left - e.clientX, (-_v.y * 0.5 + 0.5) * r.height + r.top - e.clientY);
+    if (d < bd) { bd = d; best = p.slot; }
+  }
+  return best;
+}
+const portLabel = slot => slot.side + (slot.i + 1);
+// Touch: the first tap selects a port (highlight + label), the second tap on the same port fires.
+let armed = null;
+function disarm() { if (armed) { stage.vault.setPortHover(armed, false); fx.setAim(null); armed = null; if (hud && session) updateHud(); } }
+function setHover(slot) {
+  if (state.hov && state.hov !== slot) stage.vault.setPortHover(state.hov, false);
   state.hov = slot || null;
   if (slot) stage.vault.setPortHover(slot, true);
   fx.setAim(slot ? portSpec(slot) : null);
+}
+canvas.addEventListener('pointerdown', e => {
+  if (state.screen !== 'case' || !session || !hud) return;
+  if (painting) return; // one stroke at a time: ignore extra fingers
+  if (modelMode) { const c = cellAt(e); if (c) { painting = true; paintPointer = e.pointerId; canvas.setPointerCapture(e.pointerId); session.beginStroke(); session.paint(c.x, c.y, paintTool); } return; }
+  if (tool !== 'bounce' && tool !== 'xray') return;
+  const slot = pickPort(e);
+  if (e.pointerType === 'touch') {
+    if (!slot) { disarm(); return; }
+    if (armed !== slot) { // first tap: select
+      if (armed) stage.vault.setPortHover(armed, false);
+      armed = slot; setHover(slot);
+      hud.querySelector('#hint').textContent = `${portLabel(slot)} — tap again to fire`;
+      return;
+    }
+    disarm(); setHover(null);
+  }
+  if (slot) { const r = session.fire(portSpec(slot)); if (!r.ok) toast(r.reason); }
 });
-addEventListener('pointerup', () => { if (painting) { painting = false; session.endStroke(); } });
+canvas.addEventListener('pointermove', e => {
+  if (state.screen !== 'case' || !session) return;
+  if (painting && e.pointerId !== paintPointer) return;
+  if (modelMode) { const c = cellAt(e); bp.setGhost(c); if (painting && c) session.paint(c.x, c.y, paintTool); return; }
+  if (e.pointerType === 'touch') return; // no hover on touch; selection is by tap
+  setHover((tool === 'bounce' || tool === 'xray') ? pickPort(e) : null);
+});
+function endPaint(e) { if (painting && e.pointerId === paintPointer) { painting = false; paintPointer = null; session?.endStroke(); } }
+addEventListener('pointerup', endPaint);
+addEventListener('pointercancel', endPaint);
+canvas.addEventListener('lostpointercapture', endPaint);
 addEventListener('keydown', e => {
   if (state.screen !== 'case' || !session || session.phase === 'reveal') return;
   if (e.key === 'm' || e.key === 'M') toggleModel();

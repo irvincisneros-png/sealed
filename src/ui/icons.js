@@ -11,5 +11,5 @@ export const ICONS = {
   markrecap: S('<ellipse cx="22" cy="34" rx="10" ry="6"/><path d="M32 34l8-6v12zM18 32h.1"/><ellipse cx="44" cy="46" rx="8" ry="5"/><rect x="38" y="10" width="18" height="14" rx="2"/><path d="M42 17h10"/>'),
   weather: S('<path d="M18 40a8 8 0 0 1 2-16 12 12 0 0 1 22 0 8 8 0 0 1 2 16z"/><path d="M22 48l-3 8M32 48l-3 8M42 48l-3 8"/>'),
   bushfire: S('<path d="M32 8c4 10 14 14 14 28a14 14 0 0 1-28 0c0-8 6-10 6-18 4 2 6 6 8-10z"/><path d="M32 56c-4 0-6-3-6-6 0-4 6-6 6-12 4 4 6 8 6 12 0 3-2 6-6 6z"/>'),
-  sharkmap: S('<rect x="6" y="10" width="52" height="44" rx="4"/><path d="M12 40c10-12 16 6 26-6s12 0 14-8"/><path d="M36 22l4-6 4 6z" fill="currentColor"/><circle cx="14" cy="22" r="2" fill="currentColor"/>'),
+  windtunnel: S('<rect x="6" y="14" width="52" height="36" rx="4"/><path d="M10 24h8c10 0 12-4 18-4M10 32h14M10 40h8c10 0 12 4 18 4"/><path d="M28 28c4-4 12-4 16 0s4 8 0 10-12 2-16-2z" fill="currentColor"/><path d="M46 26l8-2M46 32h8M46 38l8 2"/>'),
 };

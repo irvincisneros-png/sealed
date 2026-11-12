@@ -25,6 +25,19 @@ export function portFrame(n, slot) {
 export function portMouth(n, slot) { const f = portFrame(n, slot); return f.pos.clone().addScaledVector(f.out, 0.22).setY(0.14); }
 export function portStart(n, slot) { const f = portFrame(n, slot); return f.pos.clone().addScaledVector(f.out, 0.22 + 0.62).setY(0.13); }
 
+// Free the GPU resources of an object tree: geometries, materials and their textures.
+// Geometries flagged `userData.shared` (module-level caches that get reused) are left alone.
+export function disposeObject(root) {
+  const geos = new Set(), mats = new Set();
+  root.traverse(o => {
+    if (o.geometry && !o.isSprite && !o.geometry.userData.shared) geos.add(o.geometry);
+    if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m));
+    if (o.isInstancedMesh) o.dispose();
+  });
+  geos.forEach(g => g.dispose());
+  mats.forEach(m => { for (const v of Object.values(m)) if (v && v.isTexture) v.dispose(); m.dispose(); });
+}
+
 export function createMaterials(aniso) {
   const body = brushedSteel({ base: 118, seed: 5, repeat: [3, 1] });
   const lidSteel = brushedSteel({ base: 150, seed: 9, repeat: [2, 2] });
@@ -178,6 +191,7 @@ export class Vault {
   dimPorts(dim) { for (const p of this.ports.values()) { p.group.scale.y = 1; p.ledMat.emissiveIntensity = dim ? 0.1 : (p.used ? 1.6 : 0.35); } }
 
   dispose() {
-    this.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    disposeObject(this.group);
+    for (const m of Object.values(this.mats)) { for (const v of Object.values(m)) if (v && v.isTexture) v.dispose(); m.dispose(); }
   }
 }

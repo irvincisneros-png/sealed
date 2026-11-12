@@ -52,10 +52,10 @@ export const CARDS = [
     represents: 'Where a fire might travel across the land.',
     builtFrom: 'Past fires, fuel maps, wind and slope data.',
     leavesOut: 'Spot fires, sudden wind changes and what people do.' },
-  { id: 'sharkmap', type: 'sim', name: 'Shark tracking map', icon: 'sharkmap', unlockCase: 6,
-    represents: 'Where tagged sharks travel along the coast.',
-    builtFrom: 'Pings from acoustic tags picked up by listening stations.',
-    leavesOut: 'Sharks without tags, and where they go between listening stations.' },
+  { id: 'windtunnel', type: 'sim', name: 'Virtual wind tunnel', icon: 'windtunnel', unlockCase: 6,
+    represents: 'How air flows around a bike helmet, a car or a building.',
+    builtFrom: 'The physics of moving air, worked out by a computer and checked against real wind-tunnel tests.',
+    leavesOut: 'Tiny swirls and sudden gusts. It must still be checked against the real thing.' },
 ];
 export const cardById = id => CARDS.find(c => c.id === id);
 export const cardsForCase = n => CARDS.filter(c => c.unlockCase === n);

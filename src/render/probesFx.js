@@ -1,6 +1,6 @@
 // Probe effects: ball bearing + trail, glowing numbered arcs, x-ray sweep, scale pulse, thermal projection.
 import * as THREE from 'three';
-import { portMouth, portStart, portFrame, cellToWorld, LID_TOP } from './vault.js';
+import { portMouth, portStart, portFrame, cellToWorld, LID_TOP, disposeObject } from './vault.js';
 import { labelTexture, heatTexture } from './textures.js';
 import { PROBE_COLOURS } from '../state/game.js';
 import { fmt } from '../logic/probes.js';
@@ -44,10 +44,14 @@ export class ProbeFx {
   }
   attach(vault) { this.vault = vault; this.n = vault.n; this.clear(); }
   clear() {
-    for (const it of this.items.values()) { this.group.remove(it.group); it.group.traverse(o => { o.geometry?.dispose(); if (o.material?.map) o.material.map.dispose(); o.material?.dispose?.(); }); }
+    for (const it of this.items.values()) { this.group.remove(it.group); disposeObject(it.group); }
     this.items.clear(); this.anims.clear();
-    if (this.ball) { this.group.remove(this.ball.mesh); }
-    this.thermalMesh = null;
+    if (this.ball) { // rebuilt on the next bounce, so it is never left invisible or half-removed
+      this.group.remove(this.ball.mesh, this.ball.trail);
+      disposeObject(this.ball.mesh); disposeObject(this.ball.trail);
+      this.ball = null;
+    }
+    this.thermalMesh = null; this.thermalItem = null;
     this.vault?.resetLeds();
     this.highlightId = null;
   }

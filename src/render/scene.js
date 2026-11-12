@@ -4,7 +4,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { workshopWood, glowSprite } from './textures.js';
 import { QUALITY, FpsGuard } from './quality.js';
-import { Vault, BODY_H } from './vault.js';
+import { Vault, BODY_H, disposeObject } from './vault.js';
 
 const MODES = {
   idle: { el: 46, dist: 1.1 },
@@ -79,7 +79,7 @@ export class Stage {
   }
   #buildProps(n) {
     const g = this.props;
-    while (g.children.length) { const c = g.children.pop(); c.traverse?.(o => o.geometry?.dispose()); }
+    while (g.children.length) { disposeObject(g.children.pop()); }
     const y0 = -BODY_H - 0.14;
     // cutting mat
     const S = n + 6.4;

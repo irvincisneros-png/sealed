@@ -9,7 +9,7 @@ export const PROBE_COLOURS = ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072
 export class Session {
   #truth; #listeners = new Map(); #undo = [];
   constructor(def) {
-    this.def = def;
+    // note: the definition (which holds the truth grid) is deliberately not kept; the truth lives only in #truth
     this.mode = def.mode; // 'case' | 'daily' | 'shared' | 'build'
     this.caseId = def.caseId ?? null;
     this.name = def.name;
@@ -104,14 +104,16 @@ export class Session {
       this.draftModel = cloneGrid(this.model);
       this.draftMatch = match(this.model, this.#truth);
       const ce = counterEvidence(this.model, this.#truth, this.observations.map(o => o), 3, this.seed);
-      if (ce.length === 0) { this.survived = true; return this.#finish(); }
+      // "survived every test" only counts if the model also explains all of the student's own data
+      const bad = checkModel(this.model, this.observations).filter(c => !c.ok).map(c => c.obs);
+      if (ce.length === 0 && bad.length === 0) { this.survived = true; return this.#finish(); }
       this.newDataIds = [];
       for (const spec of ce) {
         const obs = makeObservation(this.#truth, spec, this.nextId++);
         obs.team = true; this.observations.push(obs); this.newDataIds.push(obs.id);
       }
       this.phase = 'newdata';
-      this.emit('newdata', this.observations.filter(o => o.team));
+      this.emit('newdata', this.observations.filter(o => o.team), bad);
       return { ok: true, stage: 'newdata' };
     }
     return this.#finish();

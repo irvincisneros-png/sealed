@@ -16,7 +16,7 @@ export const QUESTIONS = [
   Q('what', 'A graph and equation showing how a spring stretches with more weight.', 'maths', 'A graph and equation predict numbers. It is mathematical.'),
   Q('what', 'A program that predicts tomorrow’s rain using millions of calculations.', 'sim', 'A program running many calculations is a computer simulation.'),
   Q('what', 'Software that shows how a bushfire could spread over hills in the wind.', 'sim', 'It runs a program to imitate a real event. That is a simulation.'),
-  Q('what', 'A map that moves dots to show where tagged sharks swim.', 'sim', 'It is run by software using live data. It is a simulation.'),
+  Q('what', 'Software that shows how air flows around a new bike helmet, without building one.', 'sim', 'A program works out the airflow on a computer. It is a simulation.'),
   Q('need', 'A scientist wants to test how a new bridge copes with wind, without building it.', 'sim', 'A simulation can run the test on a computer, safely and cheaply.'),
   Q('need', 'A scientist wants to explain to a class how particles move in a gas.', 'diagram', 'A diagram can show an idea quickly and clearly.'),
   Q('need', 'A scientist wants to predict how far a car travels in 5 seconds at a steady speed.', 'maths', 'An equation gives a number prediction straight away.'),

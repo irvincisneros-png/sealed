@@ -113,7 +113,7 @@ Plus **Daily Vault** (seeded, N=10, $340, all probes; available after case 3) an
 - **Physical**: globe; ball-and-stick molecule model; crash-test dummy.
 - **Diagram / conceptual**: particle model of matter; food web; water cycle diagram.
 - **Mathematical**: speed = distance ÷ time; line of best fit on a graph; mark–recapture population estimate.
-- **Computer simulation**: weather forecast; bushfire spread prediction; shark tracking map (nod to sibling sim Shark Watch).
+- **Computer simulation**: weather forecast; bushfire spread prediction; virtual wind tunnel.
 
 **Model Match** boss round: 10 questions in 90 s from a bank of ≥ 24. Two kinds: "Which type of model is this?" and "A scientist needs to … which type of model fits best?". Four type buttons. Streak bonus. Wrong answers show the card's one-line reason. Keep reading load low (≤ 20 words a question).
 

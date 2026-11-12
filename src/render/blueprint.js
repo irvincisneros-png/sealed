@@ -1,6 +1,6 @@
 // Blueprint painting prisms + reveal (artefact, hologram overlay, lid opening).
 import * as THREE from 'three';
-import { cellToWorld, LID_TOP, FLOOR_Y } from './vault.js';
+import { cellToWorld, LID_TOP, FLOOR_Y, disposeObject } from './vault.js';
 import { wedgeSets } from '../logic/score.js';
 import { blueprintGrid } from './textures.js';
 import { CORNER } from '../logic/grid.js';
@@ -17,7 +17,7 @@ function prism(v, depth, bevel) {
   const k = v + ':' + depth;
   if (!geoCache.has(k)) {
     const g = new THREE.ExtrudeGeometry(shape(v), { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2 });
-    g.rotateX(-Math.PI / 2); geoCache.set(k, g);
+    g.rotateX(-Math.PI / 2); g.userData.shared = true; geoCache.set(k, g);
   }
   return geoCache.get(k);
 }
@@ -31,7 +31,7 @@ export class Blueprint {
   }
   attach(vault) {
     this.vault = vault; this.n = vault.n;
-    if (this.holo) this.group.remove(this.holo);
+    for (const old of [this.holo, this.ghost]) if (old) { this.group.remove(old); disposeObject(old); }
     this.holo = new THREE.Mesh(new THREE.PlaneGeometry(this.n, this.n), new THREE.MeshBasicMaterial({ map: blueprintGrid(this.n), transparent: true, depthWrite: false, opacity: 0, blending: THREE.AdditiveBlending }));
     this.holo.rotation.x = -Math.PI / 2; this.holo.position.y = LID_TOP + 0.015; this.holo.renderOrder = 1;
     this.group.add(this.holo);
@@ -104,5 +104,9 @@ export function playReveal(stage, vault, truth, model, onDone) {
     if (t > 2.0) { art.visible = true; vault.platform.position.y = FLOOR_Y + 0.75 * ease(Math.min(1, (t - 2.0) / 1.2)); }
     if (t > 3.3 && !holo.visible) { holo.visible = true; onDone?.(); off(); }
   });
-  return { art, holo, destroy() { vault.platform.remove(art, holo); } };
+  let gone = false;
+  return { art, holo, destroy() {
+    if (gone) return; gone = true; off();
+    vault.platform.remove(art, holo); disposeObject(art); disposeObject(holo);
+  } };
 }
