@@ -377,3 +377,5 @@ function routeHash() {
 }
 addEventListener('hashchange', routeHash);
 if (!routeHash()) title();
+// Loading screen (inline in index.html): hide once the first screen has painted.
+requestAnimationFrame(() => requestAnimationFrame(() => window.__hideBoot?.()));
